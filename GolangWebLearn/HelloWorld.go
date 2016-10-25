@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"html/template"
 	"io/ioutil"
 	"net/http"
 )
@@ -30,10 +31,30 @@ func favicon(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, icon)
 }
 
+func login(w http.ResponseWriter, r *http.Request) {
+	if r.Method == "GET" {
+		t, err := template.ParseFiles("login/login.html")
+		if err != nil {
+			fmt.Print(err)
+		}
+
+		err = t.Execute(w, nil)
+		if err != nil {
+			fmt.Print(err)
+		}
+	} else {
+		r.ParseForm()
+		fmt.Println(r.Form["usename"])
+		fmt.Println(r.Form["pwd"])
+	}
+}
+
 func main() {
-	// http.HandleFunc("/", myHello)
+	http.HandleFunc("/", myHello)
 	// http.HandleFunc("/favicon.ico", favicon)
-	err := http.ListenAndServe(":8080", myMux{})
+	http.HandleFunc("/login", login)
+
+	err := http.ListenAndServe(":8080", nil)
 	if err != nil {
 		fmt.Println(err)
 	}
