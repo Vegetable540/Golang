@@ -3,21 +3,38 @@ package main
 import "net/http"
 import "golang.org/x/net/websocket"
 import "log"
+import "time"
+import "strconv"
+import "runtime"
 
 func socketLive(ws *websocket.Conn) {
-	testCh := make(chan bool)
+	var times int
 	for {
-		test := <-testCh
-		log.Println(test)
+		var msg string
+		msg = "Hello" + strconv.Itoa(times)
+		err := websocket.Message.Send(ws, msg)
+		if err != nil {
+			log.Println(err)
+		}
+		<-time.After(time.Second * 1)
+		times++
 	}
 }
 
 func main() {
+	log.Println("Main", runtime.NumGoroutine())
 	connectedCount := 0
 	onConnected := func(ws *websocket.Conn) {
+		// go func() {
+		log.Println("Connected", runtime.NumGoroutine())
+		err := websocket.Message.Send(ws, "test")
+		if err != nil {
+			log.Println(err)
+		}
 		connectedCount++
-		go socketLive(ws)
-		log.Println(connectedCount, ws.LocalAddr().String()+ws.RemoteAddr().String())
+		socketLive(ws)
+		log.Println(connectedCount, ws.Request().RemoteAddr)
+		// }()
 	}
 
 	http.Handle("/", websocket.Handler(onConnected))
