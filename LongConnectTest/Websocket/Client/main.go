@@ -1,11 +1,14 @@
 package main
 
 import (
-	"golang.org/x/net/websocket"
 	"log"
+
+	"time"
+
+	"golang.org/x/net/websocket"
 )
 
-const ServerIP string = "127.0.0.1" //"192.168.222.128"
+const ServerIP string = "192.168.184.131" //"192.168.222.128"
 
 func ConnectServer() bool {
 	ws, err := websocket.Dial("ws://"+ServerIP+":9999", "", "http://"+ServerIP+":9999")
@@ -15,11 +18,11 @@ func ConnectServer() bool {
 	}
 
 	socketLive := func() {
-		log.Println(ws.LocalAddr().String() + ws.RemoteAddr().String())
-		test := make(chan bool)
 		for {
-			t := <-test
-			log.Println(t)
+			var msg string
+			websocket.Message.Receive(ws, &msg)
+			log.Println(msg)
+			<-time.After(time.Second * 1)
 		}
 	}
 
@@ -28,9 +31,11 @@ func ConnectServer() bool {
 }
 
 func main() {
-	for {
-		if !ConnectServer() {
-			return
-		}
+	for i := 0; i < 2000; i++ {
+		ConnectServer()
 	}
+
+	blockCh := make(chan bool)
+	block := <-blockCh
+	log.Println(block)
 }
